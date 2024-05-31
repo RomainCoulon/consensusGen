@@ -194,14 +194,18 @@ def displayResult(X, u, result, *, lab=False):
     x=d/MAD            # x-coordinates
     y=ud/MAD           # y-coordinates
     
-    print(f"The consensus value is {mu:.4g} ± {u_mu:.2g} (k=1)")
-
+    
     if not lab:
         lab = np.linspace(1, nX, nX)-1
         labstr = [str(int(x)) for x in lab]
     else:
         labstr = lab
-
+    
+    print(f"The consensus value is {mu:.4g} ± {u_mu:.2g} (k=1)")
+    print("The degrees of equivalence are:")
+    for il, lL in enumerate(labstr):
+        print(f"\t {lL}: {d[il]:.2g} ± {ud[il]:.2g} (k=2)")
+    
     # Data plot
     plt.figure("Data")
     plt.clf()
@@ -285,9 +289,9 @@ def displayResult(X, u, result, *, lab=False):
 
 
 # Example usage (replace with actual function call and data):
-# l = ["A", "B", "C", "D", "E", "F"]
-# X = [10.1, 11, 14, 10, 10.5, 9.8]
-# u = [1, 1, 1, 2, 1, 1.5]
-# result = consensusGen(X, u, ng=1)
-# displayResult(X, u, result, lab=l)
+l = ["A", "B", "C", "D", "E", "F"]
+X = [10.1, 11, 14, 10, 10.5, 9.8]
+u = [1, 1, 1, 2, 1, 1.5]
+result = consensusGen(X, u, ng=1)
+displayResult(X, u, result, lab=l)
 

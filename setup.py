@@ -3,7 +3,7 @@ import codecs
 import os
 
 
-VERSION = "1.4"
+VERSION = "1.5"
 
 
 DESCRIPTION = "Genetic algorithm for consensus building"
