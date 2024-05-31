@@ -3,7 +3,7 @@ import codecs
 import os
 
 
-VERSION = "1.9"
+VERSION = "1.10"
 
 
 DESCRIPTION = "Genetic algorithm for consensus building"
@@ -20,8 +20,8 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://pypi.org/project/consensusGen/",
-    py_modules=['consensusGen'],
-    project_urls={'Documentation': 'https://github.com/RomainCoulon/consensusGen/notebook.ipynb',},
+    py_modules=['consensusGen'], 
+    project_urls={'Documentation': 'https://github.com/RomainCoulon/consensusGen/',},
     packages = find_packages(),
     install_requires = ["numpy","tqdm","matplotlib"],
     keywords = ["genetic algorithm","inter-laboratory comparison","consenus building"],
