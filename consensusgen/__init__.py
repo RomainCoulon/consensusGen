@@ -1,1 +1,1 @@
-from consensusGen import consensusGen
+from consensusgen import consensusGen

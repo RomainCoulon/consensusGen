@@ -2,7 +2,9 @@ from setuptools import setup, find_packages
 import codecs
 import os
 
+
 VERSION = "1.4"
+
 
 DESCRIPTION = "Genetic algorithm for consensus building"
 
