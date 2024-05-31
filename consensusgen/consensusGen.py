@@ -289,9 +289,9 @@ def displayResult(X, u, result, *, lab=False):
 
 
 # Example usage (replace with actual function call and data):
-l = ["A", "B", "C", "D", "E", "F"]
-X = [10.1, 11, 14, 10, 10.5, 9.8]
-u = [1, 1, 1, 2, 1, 1.5]
-result = consensusGen(X, u, ng=1)
-displayResult(X, u, result, lab=l)
+# l = ["A", "B", "C", "D", "E", "F"]
+# X = [10.1, 11, 14, 10, 10.5, 9.8]
+# u = [1, 1, 1, 2, 1, 1.5]
+# result = consensusGen(X, u, ng=1)
+# displayResult(X, u, result, lab=l)
 
