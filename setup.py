@@ -3,6 +3,7 @@ import codecs
 import os
 
 VERSION = "1.2"
+
 DESCRIPTION = "Genetic algorithm for consensus building"
 
 with open("README.md", "r") as f:
