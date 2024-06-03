@@ -3,7 +3,7 @@ import codecs
 import os
 
 
-VERSION = "2.1"
+VERSION = "2.3"
 
 
 DESCRIPTION = "Genetic algorithm for consensus building"
@@ -23,7 +23,7 @@ setup(
     py_modules=['consensusGen'], 
     project_urls={'Documentation': 'https://github.com/RomainCoulon/consensusGen/',},
     packages = find_packages(),
-    install_requires = ["numpy","matplotlib","math"],
+    install_requires = ["numpy","matplotlib"],
     keywords = ["genetic algorithm","inter-laboratory comparison","consenus building"],
     classifiers=[
         "Development Status :: 4 - Beta",
