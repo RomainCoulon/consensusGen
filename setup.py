@@ -4,7 +4,7 @@ import os
 
 
 
-VERSION = "2.3"
+VERSION = "2.4"
 
 
 

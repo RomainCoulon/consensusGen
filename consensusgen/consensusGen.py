@@ -325,9 +325,9 @@ def consensusGen(X, u, *, ng=3, ni=10000, threshold=1):
 
 
 # Example usage (replace with actual function call and data):
-l = ["A", "B", "C", "D", "E", "F", "G"]
-X = [10.1, 11, 14, 10, 10.5, 9.8, 5.1]
-u = [1, 1, 1, 2, 1, 1.5, 3]
-result = consensusGen(X, u, ng=3, ni=10000, threshold=1)
-displayResult(X, u, result, lab=l)
+# l = ["A", "B", "C", "D", "E", "F", "G"]
+# X = [10.1, 11, 14, 10, 10.5, 9.8, 5.1]
+# u = [1, 1, 1, 2, 1, 1.5, 3]
+# result = consensusGen(X, u, ng=3, ni=10000, threshold=1)
+# displayResult(X, u, result, lab=l)
 
