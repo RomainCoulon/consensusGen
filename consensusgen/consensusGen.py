@@ -7,120 +7,33 @@ Created on Wed May 29 08:43:09 2024
 
 import numpy as np
 import matplotlib.pyplot as plt
+from collections import Counter
+import math
 
-def consensusGen(X, u, *, ng=3, ni=8000):
-    """Calculate a reference value using an evolutionary algorithm.
-    See: Romain Coulon and Steven Judge 2021 Metrologia 58 065007
-    https://doi.org/10.1088/1681-7575/ac31c0
-
-    Parameters
-    ----------
-    X : list of floats
-        Measurement values.
-    u : list of floats
-        Standard uncertainties of measurement values.
-    ng : int, optional
-        Number of generations (Default = 3). Set ng=0 for Linear Pool estimation.
-    ni : int, optional
-        Number of individuals in the whole population (Default = 8000).
-
-    Returns
-    -------
-    mu : float
-        Reference value.
-    u_mu : float
-        Standard uncertainty of the reference value.
-    g0pop : list of floats
-        Linear Pool distribution.
-    gLpop : list of floats
-        EA filtered distribution.
-    w : list of floats
-        Weights associated with laboratories.
-    """
-
-    m = len(X) # Number of groups
-    ni_per_group = ni // m  # Number of individuals per group
-
-    # Initialize vectors of indices for generations, groups and individuals per group 
-    if ng == 0:
-        generations = 0
-    else:
-        generations = range(ng)
-
-    group_indices = range(m)
-    individual_indices = range(ni_per_group)
-
-    # Initialize matrices and arrays
-    Gen2 = np.empty((m, ni_per_group))
-    Gen3 = np.empty((m, ni_per_group))
-    q = np.empty((m, ni_per_group)) # Matrix of phenotypes before the evolution step 
-    q2 = np.zeros((m, ni_per_group)) # Matrix of phenotypes after the evolution step 
-    w = np.ones((m, ni_per_group))
-
-    if ng == 0:
-        KCRV = np.empty(1)  # Mean of the whole population at each generation
-        uKCRV = np.empty(1)  # Standard deviation of the whole population at each generation
-    else:
-        KCRV = np.empty(ng)  # Mean of the whole population at each generation
-        uKCRV = np.empty(ng)  # Standard deviation of the whole population at each generation
-
-    # Generate the first generation
-    for i in group_indices:
-        q[i] = np.random.normal(X[i], u[i], ni_per_group) # Generate individuals from Normal distributions 
-
-    Q2 = q.ravel()  # Suppress the group separation
-
-    if ng == 0:
-        KCRV[0] = np.mean(Q2) # Calculate the mean of the linear pooling
-        uKCRV[0] = np.std(Q2) / np.sqrt(m) # Calculate the standard uncertainty of the mean of the linear pooling
-        Wgth = np.ones(m) # set equal weights to each group
-    else:
-        # Assign initial genomes to each individual
-        for i in group_indices:
-            Gen2[i, :] = i + 1 # Give the same genome to all individals within a group - genome is encoded by the group indice
-            Gen3[i, :] = i + 1
-
-        for t in generations: # Run an evolution step
-            q2.fill(0)  # Reset q2 for the new generation
-
-            for i in group_indices:
-                for j in individual_indices:
-                    if w[i, j] != 0: # if not already killed
-                        # Find the nearest phenotype of the individuals (i,j)
-                        Mat1 = np.abs(q[i, j] - q)
-                        Mat1[i, j] = float("inf")  # Exclude self
-                        nearest_idx = np.unravel_index(np.argmin(Mat1), Mat1.shape)
-                        l, c = nearest_idx # indices of the nearest phenotype
-
-                        if Gen2[i, j] != Gen2[l, c]: # Outbreading
-                            r = np.random.rand()
-                            q2[i, j] = r * q[i, j] + (1 - r) * q[l, c]  # Crossover
-                            Gen3[i, j] = np.sqrt(Gen2[i, j] * Gen2[l, c]) # Attribute a new genome
-                        else: # Inbreading
-                            w[i, j] = 0  # Kill the individuals
-                            q2[i, j] = q[i, j] # Record 
-                    else:
-                        w[i, j] = 0 # Kill the individuals 
-                        q2[i, j] = q[i, j] # Record
-
-            q = q2.copy() # Memorize the phenotypes
-            Gen2 = Gen3.copy() # Memorize the genotype
-            Q = q.ravel() # Suppress the group separation
-            W = w.ravel() # Suppress the group separation
-            G = np.where(W != 0) # Indices of alived individuals
-
-            Wgth = np.array([np.sum(w[i] != 0) / ni_per_group for i in group_indices]) # Calculation of the weights of each group
-
-            KCRV[t] = np.mean(Q[G]) # Calculate the mean of the new distribution 
-            uKCRV[t] = np.std(Q[G]) / np.sqrt(m) # Calculate the standard uncertainty of the mean of the new distribution 
-
-    mu = KCRV[-1] # Return the consensus value from the last generation
-    u_mu = uKCRV[-1] # Return the standard uncerainty of the consensus value from the last generation
-    if ng==0: gLpop = Q2
-    else: gLpop = Q[G]
-    w = Wgth / np.sum(Wgth) # Calculate the normalized weights
-
-    return mu, u_mu, Q2, gLpop, w
+def cosine_similarity(seq1, seq2):
+    
+    freq1 = Counter(seq1)
+    freq2 = Counter(seq2)
+    
+    # Get the set of all unique genes
+    genes = set(freq1.keys()).union(set(freq2.keys()))
+    
+    # Create frequency vectors
+    vec1 = [freq1.get(gene, 0) for gene in genes]
+    vec2 = [freq2.get(gene, 0) for gene in genes]
+    
+    # Calculate dot product
+    dot_product = sum(v1 * v2 for v1, v2 in zip(vec1, vec2))
+    
+    # Calculate magnitudes
+    magnitude1 = math.sqrt(sum(v1 ** 2 for v1 in vec1))
+    magnitude2 = math.sqrt(sum(v2 ** 2 for v2 in vec2))
+    
+    if not magnitude1 or not magnitude2:
+        return 0.0
+    
+    # Calculate cosine similarity
+    return dot_product / (magnitude1 * magnitude2)
 
 def DoE(x,u,x_ref,ux_ref,*,w=[],k=2):
     """This function aims to calculate Degrees of equivalence.
@@ -187,7 +100,8 @@ def displayResult(X, u, result, *, lab=False):
     -------
     None.
     """
-    mu, u_mu, g0pop, gLpop, w = result
+    mu_vec, u_mu_vec, g0pop, gLpop, w, u_w = result
+    mu=mu_vec[-1]; u_mu=u_mu_vec[-1]
     nX = len(X)
     d, ud, dr, udr = DoE(X,u,mu,u_mu,w=w)
     MAD=np.median(abs(d)) # median of absolute value of degrees of equivalence
@@ -218,6 +132,14 @@ def displayResult(X, u, result, *, lab=False):
     plt.xlabel(r'Participant', fontsize=12)
     plt.legend()
 
+    plt.figure("Convergence")
+    plt.clf()
+    plt.title("Convergence of the reference value")
+    plt.errorbar(np.arange(0,len(mu_vec),1), mu_vec, yerr=u_mu_vec, fmt='ok', capsize=3, ecolor='k', label=r"$\hat{\mu}$")
+    plt.ylabel(r'Generation', fontsize=12)
+    plt.xlabel(r'Reference value', fontsize=12)
+    plt.legend()
+
     # Data plot
     plt.figure("DoE")
     plt.clf()
@@ -240,7 +162,7 @@ def displayResult(X, u, result, *, lab=False):
     plt.figure("Weights")
     plt.clf()
     plt.title("Weights of the data in the reference value")
-    plt.bar(labstr, w)
+    plt.bar(labstr, w, yerr=u_w, capsize=5)
     plt.ylabel(r'$w_i$', fontsize=12)
     plt.xlabel(r'Participant', fontsize=12)
     plt.legend()
@@ -287,11 +209,121 @@ def displayResult(X, u, result, *, lab=False):
     # Show plots
     plt.show()
 
+def consensusGen(X, u, *, ng=3, ni=10000, threshold=1):
+    """
+    Calculate a reference value using an evolutionary algorithm.
+    See: Romain Coulon and Steven Judge 2021 Metrologia 58 065007
+    https://doi.org/10.1088/1681-7575/ac31c0
+
+    Parameters
+    ----------
+    X : list of floats
+        Measurement values.
+    u : list of floats
+        Standard uncertainties of measurement values.
+    ng : int, optional
+        Number of generations (Default = 3). Set ng=0 for Linear Pool estimation.
+    ni : int, optional
+        Number of individuals in the whole population (Default = 10000).
+    threshold : float, optional
+        Threshold on the cosine similarity (Default = 1).
+
+    Returns
+    -------
+    ref_val : float
+        Reference value.
+    unc_ref_val : float
+        Standard uncertainty of the reference value.
+    phen00 : list of floats
+        Linear Pool distribution.
+    phen1 : list of floats
+        Filtered distribution.
+    weights : list of floats
+        Weights associated with laboratories.
+    """
+    
+    def initialize_population(X, u, m, ni_per_group):
+        """Initialize the population based on normal distribution."""
+        q = np.array([np.random.normal(X[i], u[i], ni_per_group) for i in range(m)])
+        return q.ravel(), q
+    
+    def create_genomes(m, ni_per_group):
+        """Assign initial genomes to each individual."""
+        return [chr(65+i) for i in range(m) for _ in range(ni_per_group)]
+    
+    def evolutionary_step(phen0, gen0, threshold, popSize0):
+        """Run an evolution step and generate new population."""
+        phen1, gen1 = [], []
+        sibOn = True
+        for i in range(popSize0):
+            if i == 0:
+                j = 1
+            elif i == popSize0 - 1:
+                j = i - 1
+            else:
+                j = i + 1 if (abs(phen0[i]-phen0[i+1]) < abs(phen0[i]-phen0[i-1]) or not sibOn) else i - 1 
+                # j = i + 1 if (abs(phen0[i]-phen0[i+1]) < abs(phen0[i]-phen0[i-1])) else i - 1
+            
+            if cosine_similarity(gen0[i], gen0[j]) < threshold:
+                r = np.random.rand()
+                phen1.append(r * phen0[i] + (1 - r) * phen0[j])
+                gen1.append(gen0[i] + gen0[j])
+                if j == i+1: sibOn = False
+
+        return phen1, gen1
+
+    def calculate_weights(gen1, m):
+        """Calculate the weights based on the occurrence of each gene."""
+        listgen = "".join(gen1)
+        weights_dic = Counter(listgen)
+        w = [weights_dic.get(chr(65+i),0) / len(listgen) for i in range(m)]
+        unc_w = [np.sqrt(weights_dic.get(chr(65+i),0)) / len(listgen) for i in range(m)]
+        return w, unc_w
+            
+    # Initialization
+    m = len(X)
+    ni_per_group = ni // m
+    generations = range(ng)
+    
+    ref_val = np.empty(ng+1)
+    unc_ref_val = np.empty(ng+1)
+    
+    phen0, q = initialize_population(X, u, m, ni_per_group)
+    phen00 = phen0.copy()
+    popSize0 = len(phen0)
+    
+    gen0 = create_genomes(m, ni_per_group)
+    
+    paired_vectors = list(zip(phen0, gen0))
+    sorted_pairs = sorted(paired_vectors, key=lambda pair: pair[0])
+    phen0, gen0 = zip(*sorted_pairs)
+    phen0 = list(phen0)
+    gen0 = list(gen0)
+    
+    ref_val[0] = np.mean(phen0)
+    unc_ref_val[0] = np.std(phen0) / np.sqrt(m)
+    
+    for t in generations:
+        phen1, gen1 = evolutionary_step(phen0, gen0, threshold, popSize0)
+        popSize = len(phen1)
+        rateSibling = popSize / popSize0
+        print(f"The sibling rate at generation {t+1} is {100 * rateSibling:.2f}% (size: {popSize}).")
+        
+        ref_val[t+1] = np.mean(phen1)
+        unc_ref_val[t+1] = np.std(phen1) / np.sqrt(m)
+        
+        weights, unc_weights = np.asarray(calculate_weights(gen1, m))
+        phen0 = phen1
+        gen0 = gen1
+        popSize0 = popSize
+
+    return ref_val, unc_ref_val, phen00, phen1, weights, unc_weights
+
 
 # Example usage (replace with actual function call and data):
-# l = ["A", "B", "C", "D", "E", "F"]
-# X = [10.1, 11, 14, 10, 10.5, 9.8]
-# u = [1, 1, 1, 2, 1, 1.5]
-# result = consensusGen(X, u, ng=1)
+# l = ["A", "B", "C", "D", "E", "F", "G"]
+# X = [10.1, 11, 14, 10, 10.5, 9.8, 5.1]
+# u = [1, 1, 1, 2, 1, 1.5, 3]
+# result = consensusGen(X, u, ng=3, ni=10000, threshold=1)
 # displayResult(X, u, result, lab=l)
 
