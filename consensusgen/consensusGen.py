@@ -35,7 +35,7 @@ def cosine_similarity(seq1, seq2):
     # Calculate cosine similarity
     return dot_product / (magnitude1 * magnitude2)
 
-def DoE(x,u,x_ref,ux_ref,*,w=[],k=2):
+def DoE(x,u,x_ref,ux_ref,*,w=[],uw=[],k=2):
     """This function aims to calculate Degrees of equivalence.
     
     References: 
@@ -54,6 +54,8 @@ def DoE(x,u,x_ref,ux_ref,*,w=[],k=2):
     
     :param w: (Optional) Weights associated to each data point.
     :type w: array of floats
+    :param uw: (Optional) Standard uncertainty associated to weights of each data point.
+    :type uw: array of floats
     :param k: (Optional) Coverage factor (set by default equal to 2)
     :type k: float    
     
@@ -70,12 +72,15 @@ def DoE(x,u,x_ref,ux_ref,*,w=[],k=2):
     :rtype y: tuple
     """
     
-    x=np.asarray(x) # format input data
-    u=np.asarray(u) # format input data
-    w=np.asarray(w) # format input data
-    k=2
-    d=x-x_ref  # euclidian distance from the reference value
-    u2d=(1-2*w)*u**2+ux_ref**2 # variance associated with DE (the weight factor is available)
+    x = np.asarray(x) # format input data
+    u = np.asarray(u) # format input data
+    w = np.asarray(w) # format input data
+    uw = np.asarray(uw) # format input data
+    d = x - x_ref  # euclidian distance from the reference value
+    cov = np.empty(len(x))
+    for i in range(len(x)):
+        cov[i]=sum(x**2*uw[i]**2)
+    u2d=(1 - 2*w)*u**2 + ux_ref**2 + cov # variance associated with DE (the weight factor is available)
     ud=k*u2d**0.5     # enlarged standard deviation associated with DoE
     dr=d/x_ref        # relative DoE
     udr=ud/x_ref      # relative u(DoE)
@@ -103,7 +108,7 @@ def displayResult(X, u, result, *, lab=False):
     mu_vec, u_mu_vec, g0pop, gLpop, w, u_w = result
     mu=mu_vec[-1]; u_mu=u_mu_vec[-1]
     nX = len(X)
-    d, ud, dr, udr = DoE(X,u,mu,u_mu,w=w)
+    d, ud, dr, udr = DoE(X,u,mu,u_mu,w=w,uw=u_w)
     MAD=np.median(abs(d)) # median of absolute value of degrees of equivalence
     x=d/MAD            # x-coordinates
     y=ud/MAD           # y-coordinates
