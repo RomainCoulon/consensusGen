@@ -213,7 +213,7 @@ def displayResult(X, u, result, *, lab=False):
     # Show plots
     plt.show()
 
-def consensusGen(X, u, *, ng=3, ni=10000, threshold=1):
+def consensusGen(X, u, *, ng=1, ni=10000, threshold=0.98):
     """
     Calculate a reference value using an evolutionary algorithm.
     See: Romain Coulon and Steven Judge 2021 Metrologia 58 065007
@@ -258,22 +258,24 @@ def consensusGen(X, u, *, ng=3, ni=10000, threshold=1):
     def evolutionary_step(phen0, gen0, threshold, popSize0):
         """Run an evolution step and generate new population."""
         phen1, gen1 = [], []
-        sibOn = True
-        for i in range(popSize0):
-            if i == 0:
-                j = 1
-            elif i == popSize0 - 1:
-                j = i - 1
-            else:
-                j = i + 1 if (abs(phen0[i]-phen0[i+1]) < abs(phen0[i]-phen0[i-1]) or not sibOn) else i - 1 
-                # j = i + 1 if (abs(phen0[i]-phen0[i+1]) < abs(phen0[i]-phen0[i-1])) else i - 1
-            
-            if cosine_similarity(gen0[i], gen0[j]) < threshold:
+        for i in range(popSize0-1):
+            if cosine_similarity(gen0[i], gen0[i+1]) < threshold:
                 r = np.random.rand()
-                phen1.append(r * phen0[i] + (1 - r) * phen0[j])
-                gen1.append(gen0[i] + gen0[j])
-                if j == i+1: sibOn = False
+                phen1.append(r * phen0[i] + (1 - r) * phen0[i+1])
+                gen1.append(gen0[i] + gen0[i+1])
+        return phen1, gen1
 
+    def evolutionary_step1(phen0, gen0, threshold, popSize0):
+        """Run an evolution step and generate new population."""
+        phen1, gen1 = [], []
+        for i in range(popSize0-1):
+            if cosine_similarity(gen0[i], gen0[i+1]) < threshold:
+                r = np.random.rand()
+                phen1.append(r * phen0[i] + (1 - r) * phen0[i+1])
+                gen1.append(gen0[i] + gen0[i+1])
+            else:
+                phen1.append(phen0[i])
+                gen1.append(gen0[i])
         return phen1, gen1
 
     def calculate_weights(gen1, m):
@@ -312,6 +314,10 @@ def consensusGen(X, u, *, ng=3, ni=10000, threshold=1):
         popSize = len(phen1)
         rateSibling = popSize / popSize0
         print(f"The sibling rate at generation {t+1} is {100 * rateSibling:.2f}% (size: {popSize}).")
+        # phen1, gen1 = evolutionary_step1(phen1, gen1, threshold, len(phen1))
+        # popSize = len(phen1)
+        # rateSibling = popSize / popSize0
+        # print(f"The sibling rate at generation {t+1} is {100 * rateSibling:.2f}% (size: {popSize}).")
         
         ref_val[t+1] = np.mean(phen1)
         unc_ref_val[t+1] = np.std(phen1) / np.sqrt(m)
@@ -323,11 +329,19 @@ def consensusGen(X, u, *, ng=3, ni=10000, threshold=1):
 
     return ref_val, unc_ref_val, phen00, phen1, weights, unc_weights
 
-
 # Example usage (replace with actual function call and data):
 # l = ["A", "B", "C", "D", "E", "F", "G"]
 # X = [10.1, 11, 14, 10, 10.5, 9.8, 5.1]
 # u = [1, 1, 1, 2, 1, 1.5, 3]
-# result = consensusGen(X, u, ng=3, ni=10000, threshold=1)
+
+# l = ["A", "B", "C","D", "E"]
+# X = [11, 12, 13, 12, 17]
+# u = [2, 2, 2, 2, 1]
+
+# # N=10
+# # l = [chr(65+x) for x in range(N)]
+# # X = np.random.normal(loc=10, scale=2, size=N)
+# # u = np.ones(N)*1
+# result = consensusGen(X, u, ng=6, ni=100000, threshold=0.9)
 # displayResult(X, u, result, lab=l)
 
