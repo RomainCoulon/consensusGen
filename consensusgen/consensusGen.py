@@ -13,14 +13,12 @@ def cosine_similarity(seq1, seq2):
     
     freq1 = Counter(seq1)
     freq2 = Counter(seq2)
-    
     # Get the set of all unique genes
     genes = set(freq1.keys()).union(set(freq2.keys()))
     
     # Create frequency vectors
     vec1 = [freq1.get(gene, 0) for gene in genes]
     vec2 = [freq2.get(gene, 0) for gene in genes]
-    
     # Calculate dot product
     dot_product = sum(v1 * v2 for v1, v2 in zip(vec1, vec2))
     
@@ -104,7 +102,7 @@ def displayResult(X, u, result, *, lab=False):
     -------
     None.
     """
-    mu_vec, u_mu_vec, g0pop, gLpop, w, u_w = result
+    mu_vec, u_mu_vec, g0pop, gLpop, w, u_w, pops, F = result
     mu=mu_vec[-1]; u_mu=u_mu_vec[-1]
     nX = len(X)
     d, ud, dr, udr = DoE(X,u,mu,u_mu,w=w,uw=u_w)
@@ -127,57 +125,57 @@ def displayResult(X, u, result, *, lab=False):
     # Data plot
     plt.figure("Data")
     plt.clf()
-    plt.title("Data points and the reference value")
+    # plt.title("Data points and the reference value")
     plt.errorbar(labstr, X, yerr=u, fmt='ok', capsize=3, ecolor='k', label=r"$x_i$")
     plt.plot(lab, np.ones(nX) * mu, "-r", label=r"$\hat{\mu}$")
     plt.plot(lab, np.ones(nX) * (mu + u_mu), "--r", label=r"$\hat{\mu} + u(\hat{\mu})$")
     plt.plot(lab, np.ones(nX) * (mu - u_mu), "--r", label=r"$\hat{\mu} - u(\hat{\mu})$")
-    plt.ylabel(r'Value', fontsize=12)
-    plt.xlabel(r'Participant', fontsize=12)
+    plt.ylabel(r'value', fontsize=12)
+    plt.xlabel(r'$L$', fontsize=12)
     plt.legend()
 
-    plt.figure("Convergence")
-    plt.clf()
-    plt.title("Convergence of the reference value")
-    plt.errorbar(np.arange(0,len(mu_vec),1), mu_vec, yerr=u_mu_vec, fmt='ok', capsize=3, ecolor='k', label=r"$\hat{\mu}$")
-    plt.ylabel(r'Generation', fontsize=12)
-    plt.xlabel(r'Reference value', fontsize=12)
-    plt.legend()
+    # plt.figure("Convergence")
+    # plt.clf()
+    # plt.title("Convergence of the reference value")
+    # plt.errorbar(np.arange(0,len(mu_vec),1), mu_vec, yerr=u_mu_vec, fmt='ok', capsize=3, ecolor='k', label=r"$\hat{\mu}$")
+    # plt.ylabel(r'Generation', fontsize=12)
+    # plt.xlabel(r'Reference value', fontsize=12)
+    # plt.legend()
 
     # Data plot
     plt.figure("DoE")
     plt.clf()
-    plt.title("Degrees of equivalence")
+    # plt.title("Degrees of equivalence")
     plt.errorbar(labstr, d, yerr=ud, fmt='ok', capsize=3, ecolor='k')
     plt.plot(lab, np.zeros(nX), "-r")
-    plt.ylabel(r'Value', fontsize=12)
-    plt.xlabel(r'Participant', fontsize=12)
+    plt.ylabel(r'$D_i$', fontsize=12)
+    plt.xlabel(r'$L$', fontsize=12)
 
     # Data plot
     plt.figure("rDoE")
     plt.clf()
-    plt.title("Relative degrees of equivalence")
+    # plt.title("Relative degrees of equivalence")
     plt.errorbar(labstr, dr, yerr=udr, fmt='ok', capsize=3, ecolor='k')
     plt.plot(lab, np.zeros(nX), "-r")
-    plt.ylabel(r'Value', fontsize=12)
-    plt.xlabel(r'Participant', fontsize=12)
+    plt.ylabel(r'$D_{i}/\mu$', fontsize=12)
+    plt.xlabel(r'$L$', fontsize=12)
 
     # Weights plot
     plt.figure("Weights")
     plt.clf()
-    plt.title("Weights of the data in the reference value")
+    # plt.title("Weights of the data in the reference value")
     plt.bar(labstr, w, yerr=u_w, capsize=5)
     plt.ylabel(r'$w_i$', fontsize=12)
-    plt.xlabel(r'Participant', fontsize=12)
-    plt.legend()
+    plt.xlabel(r'$L$', fontsize=12)
+    # plt.legend()
 
     # Distributions plot
     plt.figure("Distributions")
     plt.clf()
     plt.hist(g0pop, bins=100, edgecolor='none', density=True, label='Linear Pooling')
     plt.hist(gLpop, bins=100, edgecolor='none', alpha=0.7, density=True, label='Genetic Algorithm')
-    plt.ylabel(r'$p(x_i)$', fontsize=12)
-    plt.xlabel(r'$x$', fontsize=12)
+    plt.ylabel(r'$p(y_i)$', fontsize=12)
+    plt.xlabel(r'$y_i$', fontsize=12)
     plt.legend()
 
     # Show plots
@@ -212,8 +210,34 @@ def displayResult(X, u, result, *, lab=False):
 
     # Show plots
     plt.show()
+    
+    plt.figure(r"$\mu$ value vs $t$")
+    plt.clf()
+    # plt.title(r"$\mu$ vs $t$")
+    plt.errorbar(np.arange(0,len(mu_vec),1), result[0], yerr=u_mu_vec, fmt='ok', capsize=3, ecolor='k')
+    plt.ylabel(r'$\mu$', fontsize=12)
+    plt.xlabel(r'$t$', fontsize=12)
 
-def consensusGen(X, u, *, ng=1, ni=10000, threshold=0.98):
+    plt.figure(r"$Z$ vs $t$")
+    plt.clf()
+    # plt.title(r"$Z$ vs $t$")
+    plt.plot(np.arange(0,len(result[0]),1), pops, 'ok')
+    # plt.plot(lab, np.zeros(nX), "-r")
+    plt.ylabel(r'$Z$', fontsize=12)
+    plt.xlabel(r'$t$', fontsize=12)
+    
+    plt.figure(r"$F$ vs $t$")
+    plt.clf()
+    # plt.title(r"$Z$ vs $t$")
+    plt.plot(np.arange(0,len(result[0]),1), F, 'ok')
+    # plt.plot(lab, np.zeros(nX), "-r")
+    plt.ylabel(r'$F$', fontsize=12)
+    plt.xlabel(r'$t$', fontsize=12)
+    
+    
+    
+
+def consensusGen(X, u, *, ng=1, ni=100000, threshold=0.98, model="normal", df=10):
     """
     Calculate a reference value using an evolutionary algorithm.
     See: Romain Coulon and Steven Judge 2021 Metrologia 58 065007
@@ -226,11 +250,15 @@ def consensusGen(X, u, *, ng=1, ni=10000, threshold=0.98):
     u : list of floats
         Standard uncertainties of measurement values.
     ng : int, optional
-        Number of generations (Default = 3). Set ng=0 for Linear Pool estimation.
+        Number of generations (Default = 1). Set ng=0 for Linear Pool estimation.
     ni : int, optional
         Number of individuals in the whole population (Default = 10000).
     threshold : float, optional
         Threshold on the cosine similarity (Default = 1).
+    model : string, optional
+        Define the statistical model. "normal" for Normal distribution and "t" for shifted Student's t-distribution (Default = "normal").
+    df : integer, optional
+        Degree of freedom applied with the shifted Student's t-distribution (Default = 10). 
 
     Returns
     -------
@@ -244,11 +272,20 @@ def consensusGen(X, u, *, ng=1, ni=10000, threshold=0.98):
         Filtered distribution.
     weights : list of floats
         Weights associated with laboratories.
+    unc_weights : list of floats
+        Standard uncertainties of the weight
+    popSize0 : list of integers
+        Population sizes as a function of the selection step
     """
     
     def initialize_population(X, u, m, ni_per_group):
         """Initialize the population based on normal distribution."""
-        q = np.array([np.random.normal(X[i], u[i], ni_per_group) for i in range(m)])
+        if model=="normal":
+            q = np.array([np.random.normal(X[i], u[i], ni_per_group) for i in range(m)])
+        elif model=="t":
+            q = np.array([X[i]+u[i]*np.random.standard_t(df=df, size=ni_per_group) for i in range(m)])
+        else:
+            print("undefined model")
         return q.ravel(), q
     
     def create_genomes(m, ni_per_group):
@@ -257,26 +294,16 @@ def consensusGen(X, u, *, ng=1, ni=10000, threshold=0.98):
     
     def evolutionary_step(phen0, gen0, threshold, popSize0):
         """Run an evolution step and generate new population."""
-        phen1, gen1 = [], []
+        phen1, gen1, fi = [], [], [] ; F=0
         for i in range(popSize0-1):
-            if cosine_similarity(gen0[i], gen0[i+1]) < threshold:
+            fi.append(1-cosine_similarity(gen0[i], gen0[i+1]))
+            if fi[-1] > threshold:
+                F+=fi[-1]
                 r = np.random.rand()
                 phen1.append(r * phen0[i] + (1 - r) * phen0[i+1])
                 gen1.append(gen0[i] + gen0[i+1])
-        return phen1, gen1
-
-    def evolutionary_step1(phen0, gen0, threshold, popSize0):
-        """Run an evolution step and generate new population."""
-        phen1, gen1 = [], []
-        for i in range(popSize0-1):
-            if cosine_similarity(gen0[i], gen0[i+1]) < threshold:
-                r = np.random.rand()
-                phen1.append(r * phen0[i] + (1 - r) * phen0[i+1])
-                gen1.append(gen0[i] + gen0[i+1])
-            else:
-                phen1.append(phen0[i])
-                gen1.append(gen0[i])
-        return phen1, gen1
+        
+        return phen1, gen1, F/len(gen1), np.mean(fi)
 
     def calculate_weights(gen1, m):
         """Calculate the weights based on the occurrence of each gene."""
@@ -296,7 +323,7 @@ def consensusGen(X, u, *, ng=1, ni=10000, threshold=0.98):
     
     phen0, q = initialize_population(X, u, m, ni_per_group)
     phen00 = phen0.copy()
-    popSize0 = len(phen0)
+    popSize0 = [len(phen0)]
     
     gen0 = create_genomes(m, ni_per_group)
     
@@ -308,40 +335,44 @@ def consensusGen(X, u, *, ng=1, ni=10000, threshold=0.98):
     
     ref_val[0] = np.mean(phen0)
     unc_ref_val[0] = np.std(phen0) / np.sqrt(m)
-    
+    Ff = []
     for t in generations:
-        phen1, gen1 = evolutionary_step(phen0, gen0, threshold, popSize0)
-        popSize = len(phen1)
-        rateSibling = popSize / popSize0
-        print(f"The sibling rate at generation {t+1} is {100 * rateSibling:.2f}% (size: {popSize}).")
-        # phen1, gen1 = evolutionary_step1(phen1, gen1, threshold, len(phen1))
-        # popSize = len(phen1)
-        # rateSibling = popSize / popSize0
-        # print(f"The sibling rate at generation {t+1} is {100 * rateSibling:.2f}% (size: {popSize}).")
-        
+        phen1, gen1, F , F0= evolutionary_step(phen0, gen0, threshold, popSize0[-1])
+        if t==0:
+            Ff.append(F0)
+        Ff.append(F)
+        popSize0.append(len(phen1))
+        rateSibling = popSize0[-1] / popSize0[0]
+        print(f"The sibling rate at generation {t+1} is {100 * rateSibling:.2f}% (size: {popSize0[-1]}).")
+
         ref_val[t+1] = np.mean(phen1)
-        unc_ref_val[t+1] = np.std(phen1) / np.sqrt(m)
+        unc_ref_val[t+1] = (np.std(phen1) / np.sqrt(m)) * np.sqrt(popSize0[0] / popSize0[-1])
         
         weights, unc_weights = np.asarray(calculate_weights(gen1, m))
         phen0 = phen1
         gen0 = gen1
-        popSize0 = popSize
 
-    return ref_val, unc_ref_val, phen00, phen1, weights, unc_weights
+    return ref_val, unc_ref_val, phen00, phen1, weights, unc_weights, popSize0, Ff
 
 # Example usage (replace with actual function call and data):
 # l = ["A", "B", "C", "D", "E", "F", "G"]
-# X = [10.1, 11, 14, 10, 10.5, 9.8, 5.1]
-# u = [1, 1, 1, 2, 1, 1.5, 3]
+# x = [10.1, 11, 14, 10, 10.5, 9.8, 5.1]
+# u = [1,    1, 1,  2, 1,    1.5, 3]
 
 # l = ["A", "B", "C","D", "E"]
-# X = [11, 12, 13, 12, 17]
+# x = [11, 12, 13, 12, 17]
 # u = [2, 2, 2, 2, 1]
 
-# # N=10
-# # l = [chr(65+x) for x in range(N)]
-# # X = np.random.normal(loc=10, scale=2, size=N)
-# # u = np.ones(N)*1
-# result = consensusGen(X, u, ng=6, ni=100000, threshold=0.9)
-# displayResult(X, u, result, lab=l)
+# N=10
+# l = [chr(65+x) for x in range(N)]
+# x = np.random.normal(loc=10, scale=0.5, size=N)
+# x[0]=14
+# x[1]=15
+# u = np.ones(N)*1
+# result = consensusGen(x, u, ng=2, ni=100000, threshold=0.01, model="normal", df=20)
+# print(result[0], result[1])
+
+
+
+# displayResult(x, u, result, lab=l)
 
